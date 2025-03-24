@@ -1,14 +1,52 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from collections import namedtuple
+import sys, uuid
+
 BASE_HOST = str(Network.Address)
 BASE_PORT = 32400
 
+WebApiResult = namedtuple('WebApiResult', ['values', 'attributes'])
+
+def WebApiRequest(endpoint):
+    global BASE_PORT
+
+    uri = 'http://%s:%d%s' % (BASE_HOST, BASE_PORT, endpoint)
+
+    res = JSON.ObjectFromURL(uri, None, { 'Accept': 'application/json' })
+
+    if not res:
+        return None
+
+    if 'MediaContainer' not in res or 'size' not in res['MediaContainer']:
+        raise ValueError('not a MediaContainer')
+
+    # container title1 key is unknown to us so we have to deduce it by searching
+    # corresponding list element
+    size  = res['MediaContainer']['size']
+    vals  = list()
+    attrs = dict()
+
+    for k, v in res['MediaContainer'].items():
+        if (isinstance(v, list)):
+            if (size != len(v)):
+                raise ValueError('invalid MediaContainer size (expected %d, got %d)' % (size, len(v)))
+            else:
+                vals = v
+        elif (k != 'size'):
+            attrs[k] = v
+
+    return WebApiResult(vals, attrs)
+
+
 def Start():
     Log.Debug("Starting DirectDLNA...")
+    pass
 
 def Restart():
     pass
+
 
 @handler('/applications/dlna', 'DirectDLNA')
 def Main():
@@ -18,6 +56,7 @@ def Main():
 def DumpDebugInfo():
     global BASE_HOST, BASE_PORT
 
+    # FIXME: more correct way to display 404?
     if not Prefs['debug_endpoint']:
         Response.Headers['Content-Length'] = 85
         Response.Headers['Content-Type']   = 'text/html'
