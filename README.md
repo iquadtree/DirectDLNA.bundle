@@ -15,6 +15,7 @@ When DLNA streaming enabled on server this plugin exposes M3U playlist containin
 
   - Enable DLNA server in Plex settings (click on wrench icon at the top-right corner and select 'Settings - DLNA' in the list at the left pane)
   - Point your player to URI http://BASE-URL:32400/applications/dlna/media.m3u8 to get playlist (format will be defined automatically according to HTTP headers of user agent)
+  - Unless DLNA server is enabled 404 status returns
 
 ## Configuring the plugin
 

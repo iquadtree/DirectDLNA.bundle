@@ -39,6 +39,17 @@ def WebApiRequest(endpoint):
 
     return WebApiResult(vals, attrs)
 
+def CheckDLNAEnabled():
+    prefs = WebApiRequest('/:/prefs')
+
+    for pref in prefs.values:
+        if 'id' in pref and 'value' in pref and pref['id'] == 'DlnaEnabled':
+            return bool(pref['value'])
+    else:
+        Log.Warning('Cannot obtain DLNA status')
+
+    return False
+
 
 def Start():
     Log.Debug("Starting DirectDLNA...")
@@ -67,6 +78,7 @@ def DumpDebugInfo():
 
     dbg  = '\n'
     dbg += '=====> DIRECTDLNA DEBUG INFO <=====\n'
+    dbg += 'Server DLNA enabled:\t%s\n' % str(CheckDLNAEnabled())
     dbg += 'Server base URI:\thttp://%s:%d\n' % (BASE_HOST, BASE_PORT)
 
     dbg += '========= CLIENT  REQUEST =========\n'
@@ -87,6 +99,15 @@ def DumpDebugInfo():
 
 @route('/applications/dlna/media.m3u8')
 def GetPlaylist():
+    # FIXME: more correct way to display 404?
+    if not CheckDLNAEnabled():
+        Response.Headers['Content-Length'] = 85
+        Response.Headers['Content-Type']   = 'text/html'
+
+        Response.Status = 404
+
+        return str('<html><head><title>Not Found</title></head><body><h1>404 Not Found</h1></body></html>')
+
     Response.Headers['Content-Type'] = 'application/x-mpegURL'
 
     playlist =  '#EXTM3U\n'
