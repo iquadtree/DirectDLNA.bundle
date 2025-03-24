@@ -5,8 +5,7 @@ def Start():
     Log.Debug("Starting DirectDLNA...")
 
 def Restart():
-    Log.Debug("Restarting DirectDLNA...")
-
+    pass
 
 @handler('/applications/dlna', 'DirectDLNA')
 def Main():
