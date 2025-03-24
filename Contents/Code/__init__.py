@@ -7,6 +7,11 @@ import sys, uuid
 BASE_HOST = str(Network.Address)
 BASE_PORT = 32400
 
+DLNA_HOST = str(Network.Hostname)
+DLNA_PORT = 32469
+
+DLNA_UUID = '00000000-0000-0000-0000-000000000000'
+
 WebApiResult = namedtuple('WebApiResult', ['values', 'attributes'])
 
 def WebApiRequest(endpoint):
@@ -53,6 +58,27 @@ def CheckDLNAEnabled():
 
 def Start():
     Log.Debug("Starting DirectDLNA...")
+
+    global BASE_PORT, LIBRARIES, DLNA_HOST, DLNA_UUID
+
+    server = WebApiRequest('/servers')
+
+    if server:
+        # adjust base port and DLNA URI
+        BASE_PORT = server.values[0]['port']
+        DLNA_HOST = server.values[0]['host']
+
+        # construct UUID for ContentDirectory service
+        machine_identifier = server.values[0]['machineIdentifier']
+
+        DLNA_UUID = machine_identifier[0:8] + '-'
+        DLNA_UUID += machine_identifier[8:12] + '-'
+        DLNA_UUID += machine_identifier[12:16] + '-'
+        DLNA_UUID += machine_identifier[16:20] + '-'
+        DLNA_UUID += machine_identifier[20:32]
+    else:
+        Log.Error('Cannot determine running server information')
+
     pass
 
 def Restart():
@@ -65,7 +91,7 @@ def Main():
 
 @route('applications/dlna/debug')
 def DumpDebugInfo():
-    global BASE_HOST, BASE_PORT
+    global DLNA_HOST, DLNA_PORT, DLNA_UUID
 
     # FIXME: more correct way to display 404?
     if not Prefs['debug_endpoint']:
@@ -79,7 +105,8 @@ def DumpDebugInfo():
     dbg  = '\n'
     dbg += '=====> DIRECTDLNA DEBUG INFO <=====\n'
     dbg += 'Server DLNA enabled:\t%s\n' % str(CheckDLNAEnabled())
-    dbg += 'Server base URI:\thttp://%s:%d\n' % (BASE_HOST, BASE_PORT)
+    dbg += 'Server DLNA URI:\thttp://%s:%d\n' % (DLNA_HOST, DLNA_PORT)
+    dbg += 'Server DLNA UUID:\t%s\n' % DLNA_UUID
 
     dbg += '========= CLIENT  REQUEST =========\n'
 
@@ -99,6 +126,8 @@ def DumpDebugInfo():
 
 @route('/applications/dlna/media.m3u8')
 def GetPlaylist():
+    global DLNA_HOST, DLNA_PORT, DLNA_UUID
+
     # FIXME: more correct way to display 404?
     if not CheckDLNAEnabled():
         Response.Headers['Content-Length'] = 85
@@ -112,11 +141,11 @@ def GetPlaylist():
 
     playlist =  '#EXTM3U\n'
     playlist += '#EXTINF:0,Video\n'
-    playlist += 'upnp://http://synologynas.hometown:32469/ContentDirectory/a35dee1b-9a31-9af9-ad9a-193f5864553e/control.xml?ObjectID=94467912-bd40-4d2f-ad25-7b8423f7b05a\n'
+    playlist += 'upnp://http://%s:%d/ContentDirectory/%s/control.xml?ObjectID=94467912-bd40-4d2f-ad25-7b8423f7b05a\n' % (DLNA_HOST, DLNA_PORT, DLNA_UUID)
     playlist += '#EXTINF:0,Music\n'
-    playlist += 'upnp://http://synologynas.hometown:32469/ContentDirectory/a35dee1b-9a31-9af9-ad9a-193f5864553e/control.xml?ObjectID=abe6121c-1731-4683-815c-89e1dcd2bf11\n'
+    playlist += 'upnp://http://%s:%d/ContentDirectory/%s/control.xml?ObjectID=abe6121c-1731-4683-815c-89e1dcd2bf11\n' % (DLNA_HOST, DLNA_PORT, DLNA_UUID)
     playlist += '#EXTINF:0,Photos\n'
-    playlist += 'upnp://http://synologynas.hometown:32469/ContentDirectory/a35dee1b-9a31-9af9-ad9a-193f5864553e/control.xml?ObjectID=b0184133-f840-4a4f-a583-45f99645edcd\n'
+    playlist += 'upnp://http://%s:%d/ContentDirectory/%s/control.xml?ObjectID=b0184133-f840-4a4f-a583-45f99645edcd\n' % (DLNA_HOST, DLNA_PORT, DLNA_UUID)
 
     Response.Headers['Content-Length'] = len(playlist)
     Response.Status = 200
