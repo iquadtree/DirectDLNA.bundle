@@ -1,0 +1,8 @@
+[
+    {
+        "id": "debug_endpoint",
+        "label": "Enable debug endpoint ('/applications/dlna/debug')",
+        "type": "bool",
+        "default": "false"
+    }
+]
