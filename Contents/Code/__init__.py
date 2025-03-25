@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from locale_patch import L, SetAvailableLanguages
+
 from collections import namedtuple
 import sys, uuid
 
@@ -66,6 +68,8 @@ def Start():
     Log.Debug("Starting DirectDLNA...")
 
     global BASE_PORT, LIBRARIES, DLNA_HOST, DLNA_UUID
+
+    SetAvailableLanguages({'en', 'ru'})
 
     server = WebApiRequest('/servers')
 
