@@ -20,7 +20,12 @@ LIBRARIES = {'Video'  : '94467912-bd40-4d2f-ad25-7b8423f7b05a',
              'Music'  : 'abe6121c-1731-4683-815c-89e1dcd2bf11',
              'Photos' : 'b0184133-f840-4a4f-a583-45f99645edcd'}
 
+MEDIA_URI_RULES_MATCHER = 'pcre'
+MEDIA_URI_RULES = []
+
 WebApiResult = namedtuple('WebApiResult', ['values', 'attributes'])
+MediaUriRule = namedtuple('MediaUriRule', ['selectors', 'template'])
+RuleLoadError = namedtuple('RuleLoadError', ['preference', 'rule', 'location'])
 
 def WebApiRequest(endpoint):
     global BASE_PORT
@@ -63,13 +68,53 @@ def CheckDLNAEnabled():
 
     return False
 
+def LoadMediaUriRules():
+    Log.Debug("Loading DLNA media URI rules...")
+
+    global MEDIA_URI_RULES
+
+    import ast, traceback
+
+    errors = []
+    rules = []
+
+    for n in range(5):
+        key = 'media_uri_rule_%d' % n
+
+        if not Prefs[key]:
+            continue
+
+        location = None
+        rule = None
+
+        try:
+            rule = ast.literal_eval(Prefs[key])
+
+        except SyntaxError as e:
+            location = traceback.format_exception_only(type(e), e)[2].index('^') - 4 # minus indent
+
+        except ValueError as e:
+            location = 0
+
+        if rule:
+            rules.append(MediaUriRule(rule[0], rule[1]))
+        else:
+            Log.Error('Error occured while loading rule from preference \'%s\': syntax error at col %s' % (key, str(location) if location else '<unknown>'))
+            errors.append(RuleLoadError(key, Prefs[key], location))
+
+    MEDIA_URI_RULES = rules
+
+    return errors
+
 
 def Start():
     Log.Debug("Starting DirectDLNA...")
 
-    global BASE_PORT, LIBRARIES, DLNA_HOST, DLNA_UUID
+    global BASE_PORT, LIBRARIES, DLNA_HOST, DLNA_UUID, MEDIA_URI_RULES_MATCHER
 
     SetAvailableLanguages({'en', 'ru'})
+
+    MEDIA_URI_RULES_MATCHER = Prefs['media_uri_rules_matcher']
 
     server = WebApiRequest('/servers')
 
@@ -89,9 +134,14 @@ def Start():
     else:
         Log.Error('Cannot determine running server information')
 
+    LoadMediaUriRules()
+
     pass
 
 def Restart():
+    pass
+
+def ValidatePrefs():
     pass
 
 
@@ -102,6 +152,7 @@ def Main():
 @route('applications/dlna/debug')
 def DumpDebugInfo():
     global DLNA_HOST, DLNA_PORT, DLNA_UUID, LIBRARIES
+    global MEDIA_URI_RULES, NEDIA_URI_RULES_MATCHER
 
     # FIXME: more correct way to display 404?
     if not Prefs['debug_endpoint']:
@@ -113,7 +164,7 @@ def DumpDebugInfo():
         return str('<html><head><title>Not Found</title></head><body><h1>404 Not Found</h1></body></html>')
 
     dbg  = '\n'
-    dbg += '=====> DIRECTDLNA DEBUG INFO <=====\n'
+    dbg += '===========================> DIRECTDLNA DEBUG INFO <===========================\n'
     dbg += 'Server DLNA enabled:\t%s\n' % str(CheckDLNAEnabled())
     dbg += 'Server DLNA URI:\thttp://%s:%d\n' % (DLNA_HOST, DLNA_PORT)
     dbg += 'Server DLNA UUID:\t%s\n' % DLNA_UUID
@@ -122,14 +173,25 @@ def DumpDebugInfo():
     for key in LIBRARIES:
         dbg += 'Media library \'%s\':\t%s\n' % (key, LIBRARIES[key])
 
-    dbg += '========= CLIENT  REQUEST =========\n'
+    dbg += '\n'
+
+    dbg += 'URI rules matcher:\t%s\n' % MEDIA_URI_RULES_MATCHER
+    dbg += '\n'
+
+    for rule in MEDIA_URI_RULES:
+        dbg += 'URI rule: template:\t%s\n' % rule.template
+        for k, v in rule.selectors.items():
+            dbg += 'URI rule: selector:\t\'%s: %s\'\n' % (k ,v)
+        dbg += '\n'
+
+    dbg += '=============================== CLIENT  REQUEST ===============================\n'
 
     maxtabs = (len(max(Request.Headers.keys(), key=len)) + 1) // 8
 
     for k, v in Request.Headers.items():
         dbg += '%s:%s%s\n' % (k, '\t' * (maxtabs - ((len(k) + 1) // 8) + 1), v)
 
-    dbg += '<===== DIRECTDLNA DEBUG INFO =====>\n'
+    dbg += '<=========================== DIRECTDLNA DEBUG INFO ===========================>\n'
 
     Log.Debug(dbg)
 
@@ -163,3 +225,29 @@ def GetPlaylist():
     Response.Status = 200
 
     return str(playlist)
+
+@route('/applications/dlna/reloadrules')
+def ReloadRules():
+    errors = LoadMediaUriRules()
+
+    if not errors:
+        return MessageContainer(
+            L('Success'),
+            L('All media URI selection rules loaded')
+        )
+
+    message = str()
+
+    for error in errors:
+        message += unicode(L('Syntax error while parsing media URI selection rule from preference'))
+        message += ' \'%s\'' % error.preference
+        message += ':\n' if error.location else '%s:\n' % unicode(L('(no source location available)'))
+        message += error.rule + '\n'
+        if error.location:
+            message += ' ' * error.location + '^~~~~' + '\n'
+        message += '\n'
+
+        return MessageContainer(
+            L('Error'),
+            message
+        )

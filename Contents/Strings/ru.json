@@ -4,5 +4,10 @@
     "Warning": "Внимание",
     "Error": "Ошибка",
     "Preferences": "Настройки",
-    "No description available": "Нет описания"
+    "No description available": "Нет описания",
+
+    "All media URI selection rules loaded": "Все правила выбора медиа-URI загружены",
+    "Syntax error while parsing media URI selection rule from preference": "Обнаружена ошибка синтаксиса во время разбора правила выбора медиа-URI из опции",
+
+    "(no source location available)":  "(расположение ошибки недоступно)"
 }

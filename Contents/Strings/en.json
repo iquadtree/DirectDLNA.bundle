@@ -4,5 +4,10 @@
     "Warning": "Warning",
     "Error": "Error",
     "Preferences": "Preferences",
-    "No description available": "No description available"
+    "No description available": "No description available",
+
+    "All media URI selection rules loaded": "All media URI selection rules loaded",
+    "Syntax error while parsing media URI selection rule from preference": "Syntax error while parsing media URI selection rule from preference",
+
+    "(no source location available)": "(no source location available)"
 }

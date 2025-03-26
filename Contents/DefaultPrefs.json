@@ -4,5 +4,42 @@
         "label": "Enable debug endpoint ('/applications/dlna/debug')",
         "type": "bool",
         "default": "false"
+    },
+    {
+        "id": "media_uri_rules_matcher",
+        "label": "Matcher type for playlist media URI rules",
+        "type": "enum",
+        "values": ["plain", "fnmatch", "pcre"],
+        "default": "pcre"
+	},
+    {
+        "id": "media_uri_rule_0",
+        "label": "Rule #0 for playlist media URI",
+        "type": "text",
+        "default": ""
+    },
+    {
+        "id": "media_uri_rule_1",
+        "label": "Rule #1 for playlist media URI",
+        "type": "text",
+        "default": ""
+    },
+    {
+        "id": "media_uri_rule_2",
+        "label": "Rule #2 for playlist media URI",
+        "type": "text",
+        "default": ""
+    },
+    {
+        "id": "media_uri_rule_3",
+        "label": "Rule #3 for playlist media URI",
+        "type": "text",
+        "default": ""
+    },
+    {
+        "id": "media_uri_rule_4",
+        "label": "Rule #4 for playlist media URI",
+        "type": "text",
+        "default": ""
     }
 ]
