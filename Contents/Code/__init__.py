@@ -5,7 +5,9 @@ from locale_patch import L, SetAvailableLanguages
 
 from collections import namedtuple
 from string import Template
+
 import sys, uuid
+import quirks
 
 BASE_HOST = str(Network.Address)
 BASE_PORT = 32400
