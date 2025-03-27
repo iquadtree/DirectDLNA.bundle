@@ -208,6 +208,8 @@ def GetPlaylist():
     global DLNA_HOST, DLNA_PORT, DLNA_UUID, LIBRARIES
     global MEDIA_URI_RULES, MEDIA_URI_RULES_MATCHER
 
+    import fnmatch, re
+
     # FIXME: more correct way to display 404?
     if not CheckDLNAEnabled():
         Response.Headers['Content-Length'] = 85
@@ -217,28 +219,26 @@ def GetPlaylist():
 
         return str('<html><head><title>Not Found</title></head><body><h1>404 Not Found</h1></body></html>')
 
-    # FIXME: refactor
+    # FIXME: refactor?
     uri_template = 'upnp://http://$HOST:$PORT/ContentDirectory/$UUID/control.xml?ObjectID=$LIID'
 
     for rule in MEDIA_URI_RULES:
         if not set(rule.selectors.keys()).issubset(Request.Headers.keys()):
             continue # try next rule
 
-        # FIXME: replace counter with keys list
-        matches = 0
+        match_fn = None
 
-        # FIXME: replace loop with values zipping in tuple and passing that tuple to matcher function
-        for k, v in rule.selectors.items():
-            if MEDIA_URI_RULES_MATCHER == 'plain':
-                pass # TODO: 'plain' matcher
-            elif MEDIA_URI_RULES_MATCHER == 'fnmatch':
-                pass # TODO: 'fnmatch' matcher
-            elif MEDIA_URI_RULES_MATCHER == 'pcre':
-                pass # TODO: 'pcre' matcher
-            else:
-                Log.Warning('Invalid media URI rules matcher configured, using default URI template')
+        if MEDIA_URI_RULES_MATCHER == 'plain':
+            match_fn = lambda v, s: v == s
+        elif MEDIA_URI_RULES_MATCHER == 'fnmatch':
+            match_fn = lambda v, s: fnmatch.fnmatch(v, s)
+        elif MEDIA_URI_RULES_MATCHER == 'pcre':
+            match_fn = lambda v, s: re.match(s, v)
+        else:
+            Log.Warning('Invalid media URI rules matcher configured, using default URI template')
+            break
 
-        if matches == len(rule.selectors):
+        if quirks.all([match_fn(Request.Headers[k], rule.selectors[k]) for k in rule.selectors]):
             uri_template = rule.template
             break
 
