@@ -4,6 +4,7 @@
 from locale_patch import L, SetAvailableLanguages
 
 from collections import namedtuple
+from string import Template
 import sys, uuid
 
 BASE_HOST = str(Network.Address)
@@ -203,6 +204,7 @@ def DumpDebugInfo():
 @route('/applications/dlna/media.m3u8')
 def GetPlaylist():
     global DLNA_HOST, DLNA_PORT, DLNA_UUID, LIBRARIES
+    global MEDIA_URI_RULES, MEDIA_URI_RULES_MATCHER
 
     # FIXME: more correct way to display 404?
     if not CheckDLNAEnabled():
@@ -213,13 +215,47 @@ def GetPlaylist():
 
         return str('<html><head><title>Not Found</title></head><body><h1>404 Not Found</h1></body></html>')
 
+    # FIXME: refactor
+    uri_template = 'upnp://http://$HOST:$PORT/ContentDirectory/$UUID/control.xml?ObjectID=$LIID'
+
+    for rule in MEDIA_URI_RULES:
+        if not set(rule.selectors.keys()).issubset(Request.Headers.keys()):
+            continue # try next rule
+
+        # FIXME: replace counter with keys list
+        matches = 0
+
+        # FIXME: replace loop with values zipping in tuple and passing that tuple to matcher function
+        for k, v in rule.selectors.items():
+            if MEDIA_URI_RULES_MATCHER == 'plain':
+                pass # TODO: 'plain' matcher
+            elif MEDIA_URI_RULES_MATCHER == 'fnmatch':
+                pass # TODO: 'fnmatch' matcher
+            elif MEDIA_URI_RULES_MATCHER == 'pcre':
+                pass # TODO: 'pcre' matcher
+            else:
+                Log.Warning('Invalid media URI rules matcher configured, using default URI template')
+
+        if matches == len(rule.selectors):
+            uri_template = rule.template
+            break
+
+    # FIXME: more correct way to display 406?
+    if not uri_template:
+        Response.Headers['Content-Length'] = 123
+        Response.Headers['Content-Type']   = 'text/html'
+
+        Response.Status = 406
+
+        return str('<html><head><title>Not Acceptable</title></head><body><h1>User agent has been rejected by media URI rule</h1></body></html>')
+
     Response.Headers['Content-Type'] = 'application/x-mpegURL'
 
     playlist =  '#EXTM3U\n'
 
     for key in LIBRARIES:
         playlist += '#EXTINF:0,%s\n' % key
-        playlist += 'upnp://http://%s:%d/ContentDirectory/%s/control.xml?ObjectID=%s\n' % (DLNA_HOST, DLNA_PORT, DLNA_UUID, LIBRARIES[key])
+        playlist += Template(uri_template).safe_substitute(HOST=DLNA_HOST, PORT=DLNA_PORT, UUID=DLNA_UUID, LIID=LIBRARIES[key]) + '\n'
 
     Response.Headers['Content-Length'] = len(playlist)
     Response.Status = 200
