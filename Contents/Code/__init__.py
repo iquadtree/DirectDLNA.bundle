@@ -76,7 +76,7 @@ def LoadMediaUriRules():
 
     global MEDIA_URI_RULES
 
-    import ast, traceback
+    import ast
 
     errors = []
     rules = []
@@ -94,7 +94,7 @@ def LoadMediaUriRules():
             rule = ast.literal_eval(Prefs[key])
 
         except SyntaxError as e:
-            location = traceback.format_exception_only(type(e), e)[2].index('^') - 4 # minus indent
+            location = e.offset - 1
 
         except ValueError as e:
             location = 0
@@ -102,8 +102,9 @@ def LoadMediaUriRules():
         if rule:
             rules.append(MediaUriRule(rule[0], rule[1]))
         else:
-            Log.Error('Error occured while loading rule from preference \'%s\': syntax error at col %s' % (key, str(location) if location else '<unknown>'))
+            sloc = str(location) if location else '<unknown>'
             errors.append(RuleLoadError(key, Prefs[key], location))
+            Log.Error('Error occured while loading rule from preference \'%s\': syntax error at col %s' % (key, sloc))
 
     MEDIA_URI_RULES = rules
 
