@@ -12,21 +12,23 @@
 languages = list()
 
 
-# Translate function override to avoid unicode decoding bug.
 def L(string):
+    """Translate function override to avoid unicode decoding bug."""
     initialize_locale()
     local_string = Locale.LocalString(string)
     return str(local_string).decode()
 
 
 def SetAvailableLanguages(list):
+    """Set languages to which calling code was translated."""
     global languages
     languages = list
 
 
-# Client language detection.
-# Make sure this function does its thing only the first time it's called (once per request).
 def initialize_locale():
+    """Client language detection. Make sure this function does its thing only the first time it's
+    called (once per request).
+    """
     if 'Plex-Locale-Patch' in Request.Headers:
         return
     for parse_func in [parse_x_plex_language_value, parse_accept_language_value]:
@@ -38,9 +40,8 @@ def initialize_locale():
         Log('Locale Patch: language not detected. All request headers: %s' % str(Request.Headers))
     Request.Headers['Plex-Locale-Patch'] = 'y'
 
-
-# Parse 'X-Plex-Language' header
 def parse_x_plex_language_value():
+    """Parse 'X-Plex-Language' header."""
     if 'X-Plex-Language' in Request.Headers:
         header_value = Request.Headers['X-Plex-Language']
         matched_value = Locale.Language.Match(header_value)
@@ -50,9 +51,10 @@ def parse_x_plex_language_value():
         return select_available_language([matched_value])
 
 
-# Parse 'Accept-Language' header
-# Based on http://stackoverflow.com/a/17911139
 def parse_accept_language_value():
+    """Parse 'Accept-Language' header.
+       Based on http://stackoverflow.com/a/17911139
+    """
     if 'Accept-Language' in Request.Headers:
         header_value = Request.Headers['Accept-Language']
         # Extract all locales and their preference (q)
@@ -70,11 +72,13 @@ def parse_accept_language_value():
         # Remove weights from the list, keep only locale names
         locales = map(lambda locale_tuple: locale_tuple[0], locales)
         if len(locales):
-            Log('Locale Patch: found languages in Accept-Language header (%s)' % header_value)
+            Log(f'Locale Patch: found languages in Accept-Language header ({header_value})')
             return select_available_language(locales)
+    return None
 
 
 def select_available_language(locales):
+    """Select working language for localization patch."""
     global languages
     if not len(languages):
         Log('Locale Patch: no known available languages, using "%s" as the %s choise. Call SetAvailableLanguages(list) function to improve this.' % (locales[0], 'only' if len(languages) == 1 else 'first'))
@@ -87,4 +91,5 @@ def select_available_language(locales):
 
 
 def set_language_header(value):
+    """Set 'X-Plex-Language' header value."""
     Request.Headers['X-Plex-Language'] = value

@@ -43,6 +43,7 @@ MediaUriRule = namedtuple('MediaUriRule', ['selectors', 'template'])
 RuleLoadError = namedtuple('RuleLoadError', ['preference', 'rule', 'location'])
 
 def Response404(reason = '404 Not Found'):
+    """Send response 404 (Not Found) to user agent. Can only be used in request context."""
     html = '<html><head><title>Not Found</title></head><body><h1>%s</h1></body></html>' % reason
 
     Response.Headers['Content-Length'] = len(html)
@@ -53,6 +54,7 @@ def Response404(reason = '404 Not Found'):
     return str(html)
 
 def Response406(reason = '406 Not Acceptable'):
+    """Send response 406 (Not Acceptable) to user agent. Can only be used in request context."""
     html = '<html><head><title>Not Acceptable</title></head><body><h1></h1></body></html>' % reason
 
     Response.Headers['Content-Length'] = len(html)
@@ -63,6 +65,7 @@ def Response406(reason = '406 Not Acceptable'):
     return str(html)
 
 def WebApiRequest(endpoint):
+    """Perform request to Plex Web API. Returns value list of MediaContainer and its attributes."""
     global BASE_PORT
 
     uri = 'http://%s:%d%s' % (BASE_HOST, BASE_PORT, endpoint)
@@ -93,6 +96,7 @@ def WebApiRequest(endpoint):
     return WebApiResult(vals, attrs)
 
 def CheckDLNAEnabled():
+    """Check using Web API whether DLNA is enabled in Plex settings."""
     prefs = WebApiRequest('/:/prefs')
 
     for pref in prefs.values:
@@ -104,6 +108,7 @@ def CheckDLNAEnabled():
     return False
 
 def LoadMediaUriRules():
+    """Load media URI selection rules from corresponding preferences."""
     Log.Debug("Loading DLNA media URI rules...")
 
     global MEDIA_URI_RULES
@@ -142,6 +147,7 @@ def LoadMediaUriRules():
 
 
 def Start():
+    """Entry point of the plugin."""
     Log.Debug("Starting DirectDLNA...")
 
     global BASE_PORT, LIBRARIES, DLNA_HOST, DLNA_UUID, MEDIA_URI_RULES_MATCHER
@@ -173,18 +179,20 @@ def Start():
     pass
 
 def Restart():
-    pass
+    """Executes at plugin reload."""
 
 def ValidatePrefs():
-    pass
+    """Executes at preference change."""
 
 
 @handler('/applications/dlna', 'DirectDLNA')
 def Main():
-    pass
+    """URI handler binding to plugin. This function does nothing though..."""
+
 
 @route('applications/dlna/debug')
 def DumpDebugInfo():
+    """Emits various debug info to log. Returns 204 (No Content) to user agent when success."""
     global DLNA_HOST, DLNA_PORT, DLNA_UUID, LIBRARIES
     global MEDIA_URI_RULES, NEDIA_URI_RULES_MATCHER
 
@@ -229,6 +237,7 @@ def DumpDebugInfo():
 
 @route('/applications/dlna/media.m3u8')
 def GetPlaylist():
+    """Send formatted playlist to user agent or 406 when UA is not allowed by rule."""
     global DLNA_HOST, DLNA_PORT, DLNA_UUID, LIBRARIES
     global MEDIA_URI_RULES, MEDIA_URI_RULES_MATCHER
 
@@ -273,6 +282,7 @@ def GetPlaylist():
 
 @route('/applications/dlna/reloadrules')
 def ReloadRules():
+    """Explicitly reload rules by user agent request."""
     errors = LoadMediaUriRules()
 
     if not errors:
