@@ -30,6 +30,26 @@ WebApiResult = namedtuple('WebApiResult', ['values', 'attributes'])
 MediaUriRule = namedtuple('MediaUriRule', ['selectors', 'template'])
 RuleLoadError = namedtuple('RuleLoadError', ['preference', 'rule', 'location'])
 
+def Response404(reason = '404 Not Found'):
+    html = '<html><head><title>Not Found</title></head><body><h1>%s</h1></body></html>' % reason
+
+    Response.Headers['Content-Length'] = len(html)
+    Response.Headers['Content-Type']   = 'text/html'
+
+    Response.Status = 404
+
+    return str(html)
+
+def Response406(reason = '406 Not Acceptable'):
+    html = '<html><head><title>Not Acceptable</title></head><body><h1></h1></body></html>' % reason
+
+    Response.Headers['Content-Length'] = len(html)
+    Response.Headers['Content-Type']   = 'text/html'
+
+    Response.Status = 406
+
+    return str(html)
+
 def WebApiRequest(endpoint):
     global BASE_PORT
 
@@ -158,14 +178,7 @@ def DumpDebugInfo():
     global DLNA_HOST, DLNA_PORT, DLNA_UUID, LIBRARIES
     global MEDIA_URI_RULES, NEDIA_URI_RULES_MATCHER
 
-    # FIXME: more correct way to display 404?
-    if not Prefs['debug_endpoint']:
-        Response.Headers['Content-Length'] = 85
-        Response.Headers['Content-Type']   = 'text/html'
-
-        Response.Status = 404
-
-        return str('<html><head><title>Not Found</title></head><body><h1>404 Not Found</h1></body></html>')
+    if not Prefs['debug_endpoint']: return Response404()
 
     dbg  = '\n'
     dbg += '===========================> DIRECTDLNA DEBUG INFO <===========================\n'
@@ -211,16 +224,8 @@ def GetPlaylist():
 
     import fnmatch, re
 
-    # FIXME: more correct way to display 404?
-    if not CheckDLNAEnabled():
-        Response.Headers['Content-Length'] = 85
-        Response.Headers['Content-Type']   = 'text/html'
+    if not CheckDLNAEnabled(): return Response404()
 
-        Response.Status = 404
-
-        return str('<html><head><title>Not Found</title></head><body><h1>404 Not Found</h1></body></html>')
-
-    # FIXME: refactor?
     uri_template = 'upnp://http://$HOST:$PORT/ContentDirectory/$UUID/control.xml?ObjectID=$LIID'
 
     for rule in MEDIA_URI_RULES:
@@ -243,14 +248,7 @@ def GetPlaylist():
             uri_template = rule.template
             break
 
-    # FIXME: more correct way to display 406?
-    if not uri_template:
-        Response.Headers['Content-Length'] = 123
-        Response.Headers['Content-Type']   = 'text/html'
-
-        Response.Status = 406
-
-        return str('<html><head><title>Not Acceptable</title></head><body><h1>User agent has been rejected by media URI rule</h1></body></html>')
+    if not uri_template: return Response406('User agent has been rejected by media URI rule')
 
     Response.Headers['Content-Type'] = 'application/x-mpegURL'
 
