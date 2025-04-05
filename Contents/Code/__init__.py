@@ -18,8 +18,8 @@ import fnmatch
 import re
 import sys
 
-from locale_patch import L, SetAvailableLanguages
-import quirks
+from locale_patch import L, SetAvailableLanguages # pylint: disable=E0401
+import quirks # pylint: disable=E0401
 
 BASE_HOST = str(Network.Address)
 BASE_PORT = 32400
