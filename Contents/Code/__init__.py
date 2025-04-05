@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+    Simple and experimental Plex Media Server plugin which
+    allows to play streams via DLNA without SSDP discovery
+    Copyright: 2025, iquadtree
+    License: GPL-3.0
+"""
+
 from collections import namedtuple
 from string import Template
 
