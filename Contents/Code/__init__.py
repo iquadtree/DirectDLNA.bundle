@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from locale_patch import L, SetAvailableLanguages
-
 from collections import namedtuple
 from string import Template
 
-import sys, uuid
+import ast
+import fnmatch
+import re
+import sys
+
+from locale_patch import L, SetAvailableLanguages
 import quirks
 
 BASE_HOST = str(Network.Address)
@@ -95,8 +98,6 @@ def LoadMediaUriRules():
     Log.Debug("Loading DLNA media URI rules...")
 
     global MEDIA_URI_RULES
-
-    import ast
 
     errors = []
     rules = []
@@ -221,8 +222,6 @@ def DumpDebugInfo():
 def GetPlaylist():
     global DLNA_HOST, DLNA_PORT, DLNA_UUID, LIBRARIES
     global MEDIA_URI_RULES, MEDIA_URI_RULES_MATCHER
-
-    import fnmatch, re
 
     if not CheckDLNAEnabled(): return Response404()
 
