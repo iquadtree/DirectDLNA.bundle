@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# pylint: disable=invalid-name, undefined-variable # disabled due to Plex plugin code style guide
+
 """
     Simple and experimental Plex Media Server plugin which
     allows to play streams via DLNA without SSDP discovery

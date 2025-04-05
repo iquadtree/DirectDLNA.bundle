@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+# pylint: disable=invalid-name, undefined-variable # disabled due to Plex plugin code style guide
+
 """
     Localization patch for Plex Media Server channels
     https://bitbucket.org/czukowski/plex-locale-patch/
