@@ -44,7 +44,7 @@ RuleLoadError = namedtuple('RuleLoadError', ['preference', 'rule', 'location'])
 
 def Response404(reason = '404 Not Found'):
     """Send response 404 (Not Found) to user agent. Can only be used in request context."""
-    html = '<html><head><title>Not Found</title></head><body><h1>%s</h1></body></html>' % reason
+    html = f'<html><head><title>Not Found</title></head><body><h1>{reason}</h1></body></html>'
 
     Response.Headers['Content-Length'] = len(html)
     Response.Headers['Content-Type']   = 'text/html'
@@ -55,7 +55,7 @@ def Response404(reason = '404 Not Found'):
 
 def Response406(reason = '406 Not Acceptable'):
     """Send response 406 (Not Acceptable) to user agent. Can only be used in request context."""
-    html = '<html><head><title>Not Acceptable</title></head><body><h1></h1></body></html>' % reason
+    html = f'<html><head><title>Not Acceptable</title></head><body><h1>{reason}</h1></body></html>'
 
     Response.Headers['Content-Length'] = len(html)
     Response.Headers['Content-Type']   = 'text/html'
@@ -68,7 +68,7 @@ def WebApiRequest(endpoint):
     """Perform request to Plex Web API. Returns value list of MediaContainer and its attributes."""
     global BASE_PORT
 
-    uri = 'http://%s:%d%s' % (BASE_HOST, BASE_PORT, endpoint)
+    uri = f'http://{BASE_HOST}:{BASE_PORT}{endpoint}'
 
     res = JSON.ObjectFromURL(uri, None, { 'Accept': 'application/json' })
 
@@ -87,7 +87,7 @@ def WebApiRequest(endpoint):
     for k, v in res['MediaContainer'].items():
         if (isinstance(v, list)):
             if (size != len(v)):
-                raise ValueError('invalid MediaContainer size (expected %d, got %d)' % (size, len(v)))
+                raise ValueError(f'wrong MediaContainer size: expected {size}, got {len(v)}')
             else:
                 vals = v
         elif (k != 'size'):
@@ -117,7 +117,7 @@ def LoadMediaUriRules():
     rules = []
 
     for n in range(5):
-        key = 'media_uri_rule_%d' % n
+        key = f'media_uri_rule_{n}'
 
         if not Prefs[key]:
             continue
@@ -139,7 +139,10 @@ def LoadMediaUriRules():
         else:
             sloc = str(location) if location else '<unknown>'
             errors.append(RuleLoadError(key, Prefs[key], location))
-            Log.Error('Error occured while loading rule from preference \'%s\': syntax error at col %s' % (key, sloc))
+            Log.Error((
+                f'Error occured while loading rule from preference \'{key}\': '
+                f'syntax error at col {sloc}'
+            ))
 
     MEDIA_URI_RULES = rules
 
@@ -200,23 +203,23 @@ def DumpDebugInfo():
 
     dbg  = '\n'
     dbg += '===========================> DIRECTDLNA DEBUG INFO <===========================\n'
-    dbg += 'Server DLNA enabled:\t%s\n' % str(CheckDLNAEnabled())
-    dbg += 'Server DLNA URI:\thttp://%s:%d\n' % (DLNA_HOST, DLNA_PORT)
-    dbg += 'Server DLNA UUID:\t%s\n' % DLNA_UUID
+    dbg += f'Server DLNA enabled:\t{str(CheckDLNAEnabled())}\n'
+    dbg += f'Server DLNA URI:\thttp://{DLNA_HOST}:{DLNA_PORT}\n'
+    dbg += f'Server DLNA UUID:\t{DLNA_UUID}\n'
     dbg += '\n'
 
     for key in LIBRARIES:
-        dbg += 'Media library \'%s\':\t%s\n' % (key, LIBRARIES[key])
+        dbg += f'Media library \'{key}\':\t{LIBRARIES[key]}\n'
 
     dbg += '\n'
 
-    dbg += 'URI rules matcher:\t%s\n' % MEDIA_URI_RULES_MATCHER
+    dbg += f'URI rules matcher:\t{MEDIA_URI_RULES_MATCHER}\n'
     dbg += '\n'
 
     for rule in MEDIA_URI_RULES:
-        dbg += 'URI rule: template:\t%s\n' % rule.template
+        dbg += f'URI rule: template:\t{rule.template}\n'
         for k, v in rule.selectors.items():
-            dbg += 'URI rule: selector:\t\'%s: %s\'\n' % (k ,v)
+            dbg += f'URI rule: selector:\t\'{k}: {v}\'\n'
         dbg += '\n'
 
     dbg += '=============================== CLIENT  REQUEST ===============================\n'
@@ -224,7 +227,8 @@ def DumpDebugInfo():
     maxtabs = (len(max(Request.Headers.keys(), key=len)) + 1) // 8
 
     for k, v in Request.Headers.items():
-        dbg += '%s:%s%s\n' % (k, '\t' * (maxtabs - ((len(k) + 1) // 8) + 1), v)
+        tabs = '\t' * (maxtabs - ((len(k) + 1) // 8) + 1)
+        dbg += f'{k}:{tabs}{v}\n'
 
     dbg += '<=========================== DIRECTDLNA DEBUG INFO ===========================>\n'
 
@@ -272,7 +276,7 @@ def GetPlaylist():
     playlist =  '#EXTM3U\n'
 
     for key in LIBRARIES:
-        playlist += '#EXTINF:0,%s\n' % key
+        playlist += f'#EXTINF:0,{key}\n'
         playlist += Template(uri_template).safe_substitute(HOST=DLNA_HOST, PORT=DLNA_PORT, UUID=DLNA_UUID, LIID=LIBRARIES[key]) + '\n'
 
     Response.Headers['Content-Length'] = len(playlist)
@@ -295,8 +299,10 @@ def ReloadRules():
 
     for error in errors:
         message += unicode(L('Syntax error while parsing media URI selection rule from preference'))
-        message += ' \'%s\'' % error.preference
-        message += ':\n' if error.location else '%s:\n' % unicode(L('(no source location available)'))
+        message += f' \'{error.preference}\''
+        if not error.location:
+            message += ' ' + unicode(L('(no source location available)'))
+        message += ':\n'
         message += error.rule + '\n'
         if error.location:
             message += ' ' * error.location + '^~~~~' + '\n'

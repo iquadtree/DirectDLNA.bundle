@@ -47,7 +47,10 @@ def parse_x_plex_language_value():
         matched_value = Locale.Language.Match(header_value)
         if matched_value == 'xx':
             return
-        Log('Locale Patch: found language in X-Plex-Language header ("%s" matched to "%s")' % (header_value, matched_value))
+        Log((
+            f'Locale Patch: found language in X-Plex-Language header'
+            f'("{header_value}" matched to "{matched_value}")'
+        ))
         return select_available_language([matched_value])
 
 
@@ -81,11 +84,15 @@ def select_available_language(locales):
     """Select working language for localization patch."""
     global languages
     if not len(languages):
-        Log('Locale Patch: no known available languages, using "%s" as the %s choise. Call SetAvailableLanguages(list) function to improve this.' % (locales[0], 'only' if len(languages) == 1 else 'first'))
+        choice = 'only' if len(languages) == 1 else 'first'
+        Log((
+            f'Locale Patch: no known available languages, using "{locales[0]}" as the '
+            f'{choice} choice. Call SetAvailableLanguages(list) function to improve this.'
+        ))
         return locales[0]
     for item in locales:
         if item in languages:
-            Log('Locale Patch: using available language "%s".' % item)
+            Log(f'Locale Patch: using available language "{item}".')
             return item
     Log('Locale Patch: none of the languages matched available languages.')
 
