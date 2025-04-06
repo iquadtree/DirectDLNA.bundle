@@ -248,11 +248,11 @@ def GetPlaylist():
         match_fn = None
 
         if MEDIA_URI_RULES_MATCHER == 'plain':
-            match_fn = lambda v, s: v == s
+            match_fn = lambda v, s: v == s # pylint: disable=C3001
         elif MEDIA_URI_RULES_MATCHER == 'fnmatch':
-            match_fn = lambda v, s: fnmatch.fnmatch(v, s)
+            match_fn = lambda v, s: fnmatch.fnmatch(v, s) # pylint: disable=C3001, W0108
         elif MEDIA_URI_RULES_MATCHER == 'pcre':
-            match_fn = lambda v, s: re.match(s, v)
+            match_fn = lambda v, s: re.match(s, v) # pylint: disable=C3001
         else:
             Log.Warning('Invalid media URI rules matcher configured, using default URI template')
             break
