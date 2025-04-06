@@ -9,7 +9,7 @@
     License: MIT
 """
 
-languages = list()
+languages = []
 
 
 def L(string):

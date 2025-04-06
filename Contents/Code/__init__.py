@@ -79,8 +79,8 @@ def WebApiRequest(endpoint):
     # container title1 key is unknown to us so we have to deduce it by searching
     # corresponding list element
     size  = res['MediaContainer']['size']
-    vals  = list()
-    attrs = dict()
+    vals  = []
+    attrs = []
 
     for k, v in res['MediaContainer'].items():
         if (isinstance(v, list)):
