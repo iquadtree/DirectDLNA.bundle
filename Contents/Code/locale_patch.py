@@ -21,7 +21,7 @@ def L(string):
 
 def SetAvailableLanguages(list):
     """Set languages to which calling code was translated."""
-    global languages
+    global languages # pylint: disable=W0603
     languages = list
 
 
@@ -82,7 +82,6 @@ def parse_accept_language_value():
 
 def select_available_language(locales):
     """Select working language for localization patch."""
-    global languages
     if not len(languages):
         choice = 'only' if len(languages) == 1 else 'first'
         Log((

@@ -66,8 +66,6 @@ def Response406(reason = '406 Not Acceptable'):
 
 def WebApiRequest(endpoint):
     """Perform request to Plex Web API. Returns value list of MediaContainer and its attributes."""
-    global BASE_PORT
-
     uri = f'http://{BASE_HOST}:{BASE_PORT}{endpoint}'
 
     res = JSON.ObjectFromURL(uri, None, { 'Accept': 'application/json' })
@@ -111,7 +109,7 @@ def LoadMediaUriRules():
     """Load media URI selection rules from corresponding preferences."""
     Log.Debug("Loading DLNA media URI rules...")
 
-    global MEDIA_URI_RULES
+    global MEDIA_URI_RULES # pylint: disable=W0603
 
     errors = []
     rules = []
@@ -153,7 +151,7 @@ def Start():
     """Entry point of the plugin."""
     Log.Debug("Starting DirectDLNA...")
 
-    global BASE_PORT, LIBRARIES, DLNA_HOST, DLNA_UUID, MEDIA_URI_RULES_MATCHER
+    global BASE_PORT, DLNA_HOST, DLNA_UUID, MEDIA_URI_RULES_MATCHER # pylint: disable=W0603
 
     SetAvailableLanguages({'en', 'ru'})
 
@@ -196,9 +194,6 @@ def Main():
 @route('applications/dlna/debug')
 def DumpDebugInfo():
     """Emits various debug info to log. Returns 204 (No Content) to user agent when success."""
-    global DLNA_HOST, DLNA_PORT, DLNA_UUID, LIBRARIES
-    global MEDIA_URI_RULES, NEDIA_URI_RULES_MATCHER
-
     if not Prefs['debug_endpoint']: return Response404()
 
     dbg  = '\n'
@@ -242,9 +237,6 @@ def DumpDebugInfo():
 @route('/applications/dlna/media.m3u8')
 def GetPlaylist():
     """Send formatted playlist to user agent or 406 when UA is not allowed by rule."""
-    global DLNA_HOST, DLNA_PORT, DLNA_UUID, LIBRARIES
-    global MEDIA_URI_RULES, MEDIA_URI_RULES_MATCHER
-
     if not CheckDLNAEnabled(): return Response404()
 
     uri_template = 'upnp://http://$HOST:$PORT/ContentDirectory/$UUID/control.xml?ObjectID=$LIID'
