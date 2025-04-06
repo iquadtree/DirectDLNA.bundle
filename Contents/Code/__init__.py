@@ -83,12 +83,11 @@ def WebApiRequest(endpoint):
     attrs = []
 
     for k, v in res['MediaContainer'].items():
-        if (isinstance(v, list)):
-            if (size != len(v)):
+        if isinstance(v, list):
+            if size != len(v):
                 raise ValueError(f'wrong MediaContainer size: expected {size}, got {len(v)}')
-            else:
-                vals = v
-        elif (k != 'size'):
+            vals = v
+        elif k != 'size':
             attrs[k] = v
 
     return WebApiResult(vals, attrs)
@@ -129,7 +128,7 @@ def LoadMediaUriRules():
         except SyntaxError as e:
             location = e.offset - 1
 
-        except ValueError as e:
+        except ValueError:
             location = 0
 
         if rule:
@@ -177,8 +176,6 @@ def Start():
 
     LoadMediaUriRules()
 
-    pass
-
 def Restart():
     """Executes at plugin reload."""
 
@@ -194,7 +191,8 @@ def Main():
 @route('applications/dlna/debug')
 def DumpDebugInfo():
     """Emits various debug info to log. Returns 204 (No Content) to user agent when success."""
-    if not Prefs['debug_endpoint']: return Response404()
+    if not Prefs['debug_endpoint']:
+        return Response404()
 
     dbg  = '\n'
     dbg += '===========================> DIRECTDLNA DEBUG INFO <===========================\n'
@@ -203,8 +201,10 @@ def DumpDebugInfo():
     dbg += f'Server DLNA UUID:\t{DLNA_UUID}\n'
     dbg += '\n'
 
-    for key in LIBRARIES:
-        dbg += f'Media library \'{key}\':\t{LIBRARIES[key]}\n'
+    media_libs = LIBRARIES
+
+    for name, uuid in media_libs.items():
+        dbg += f'Media library \'{name}\':\t{uuid}\n'
 
     dbg += '\n'
 
@@ -237,7 +237,8 @@ def DumpDebugInfo():
 @route('/applications/dlna/media.m3u8')
 def GetPlaylist():
     """Send formatted playlist to user agent or 406 when UA is not allowed by rule."""
-    if not CheckDLNAEnabled(): return Response404()
+    if not CheckDLNAEnabled():
+        return Response404()
 
     uri_template = 'upnp://http://$HOST:$PORT/ContentDirectory/$UUID/control.xml?ObjectID=$LIID'
 
@@ -261,15 +262,20 @@ def GetPlaylist():
             uri_template = rule.template
             break
 
-    if not uri_template: return Response406('User agent has been rejected by media URI rule')
+    if not uri_template:
+        return Response406('User agent has been rejected by media URI rule')
 
     Response.Headers['Content-Type'] = 'application/x-mpegURL'
 
+    subst = {'HOST': DLNA_HOST, 'PORT': DLNA_PORT, 'UUID': DLNA_UUID, 'LIID': None}
+    media_libs = LIBRARIES
+
     playlist =  '#EXTM3U\n'
 
-    for key in LIBRARIES:
-        playlist += f'#EXTINF:0,{key}\n'
-        playlist += Template(uri_template).safe_substitute(HOST=DLNA_HOST, PORT=DLNA_PORT, UUID=DLNA_UUID, LIID=LIBRARIES[key]) + '\n'
+    for name, uuid in media_libs.items():
+        subst['LIID'] = uuid
+        playlist += f'#EXTINF:0,{name}\n'
+        playlist += Template(uri_template).safe_substitute(subst) + '\n'
 
     Response.Headers['Content-Length'] = len(playlist)
     Response.Status = 200

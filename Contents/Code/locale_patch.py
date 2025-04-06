@@ -82,7 +82,7 @@ def parse_accept_language_value():
 
 def select_available_language(locales):
     """Select working language for localization patch."""
-    if not len(languages):
+    if not languages:
         choice = 'only' if len(languages) == 1 else 'first'
         Log((
             f'Locale Patch: no known available languages, using "{locales[0]}" as the '
