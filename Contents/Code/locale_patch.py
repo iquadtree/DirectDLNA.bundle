@@ -29,29 +29,29 @@ def initialize_locale():
     """Client language detection. Make sure this function does its thing only the first time it's
     called (once per request).
     """
-    if 'Plex-Locale-Patch' in Request.Headers:
-        return
-    for parse_func in [parse_x_plex_language_value, parse_accept_language_value]:
-        value = parse_func()
-        if value:
-            set_language_header(value)
-            break
-    if not value:
-        Log('Locale Patch: language not detected. All request headers: %s' % str(Request.Headers))
-    Request.Headers['Plex-Locale-Patch'] = 'y'
+    if not 'Plex-Locale-Patch' in Request.Headers:
+        for parse_func in [parse_x_plex_language_value, parse_accept_language_value]:
+            value = parse_func()
+            if value:
+                set_language_header(value)
+                break
+        if not value:
+            Log('Locale Patch: language not detected. All request headers: {str(Request.Headers)}')
+        Request.Headers['Plex-Locale-Patch'] = 'y'
+
 
 def parse_x_plex_language_value():
     """Parse 'X-Plex-Language' header."""
     if 'X-Plex-Language' in Request.Headers:
         header_value = Request.Headers['X-Plex-Language']
         matched_value = Locale.Language.Match(header_value)
-        if matched_value == 'xx':
-            return
-        Log((
-            f'Locale Patch: found language in X-Plex-Language header'
-            f'("{header_value}" matched to "{matched_value}")'
-        ))
-        return select_available_language([matched_value])
+        if not matched_value == 'xx':
+            Log((
+                f'Locale Patch: found language in X-Plex-Language header'
+                f'("{header_value}" matched to "{matched_value}")'
+            ))
+            return select_available_language([matched_value])
+    return None
 
 
 def parse_accept_language_value():
@@ -94,6 +94,7 @@ def select_available_language(locales):
             Log(f'Locale Patch: using available language "{item}".')
             return item
     Log('Locale Patch: none of the languages matched available languages.')
+    return None
 
 
 def set_language_header(value):
