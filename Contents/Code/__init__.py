@@ -99,8 +99,8 @@ def CheckDLNAEnabled():
     for pref in prefs.values:
         if 'id' in pref and 'value' in pref and pref['id'] == 'DlnaEnabled':
             return bool(pref['value'])
-    else:
-        Log.Warning('Cannot obtain DLNA status')
+
+    Log.Warning('Cannot obtain DLNA status')
 
     return False
 

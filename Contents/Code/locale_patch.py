@@ -19,10 +19,10 @@ def L(string):
     return str(local_string).decode()
 
 
-def SetAvailableLanguages(list):
+def SetAvailableLanguages(langs):
     """Set languages to which calling code was translated."""
     global languages # pylint: disable=W0603
-    languages = list
+    languages = langs
 
 
 def initialize_locale():
@@ -83,7 +83,7 @@ def parse_accept_language_value():
 def select_available_language(locales):
     """Select working language for localization patch."""
     if not languages:
-        choice = 'only' if len(languages) == 1 else 'first'
+        choice = 'only' if len(locales) == 1 else 'first'
         Log((
             f'Locale Patch: no known available languages, using "{locales[0]}" as the '
             f'{choice} choice. Call SetAvailableLanguages(list) function to improve this.'
